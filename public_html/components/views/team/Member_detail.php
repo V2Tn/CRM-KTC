@@ -1,0 +1,1 @@
+<div id="view-member-detail" class="hidden flex flex-col gap-6"></div>

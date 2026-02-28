@@ -1,0 +1,1 @@
+<div id="view-dept-detail" class="hidden flex flex-col gap-8"></div>
