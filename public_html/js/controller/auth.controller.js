@@ -45,13 +45,25 @@ const AuthController = {
                     overlay.classList.add('opacity-0');
                     setTimeout(() => overlay.classList.add('hidden'), 500);
                 }
-                alert(res.message || 'Tài khoản hoặc mật khẩu không chính xác!');
+                AuthController.showErrorModal('Tài khoản hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại hoặc liên hệ quản trị viên!');
             }
         } catch (e) {
             if (overlay) overlay.classList.add('hidden');
-            alert('Lỗi kết nối Server!');
+            AuthController.showErrorModal('Hiện hệ thống đang gặp sự cố. Vui lòng thử lại sau!');
         } finally {
             if (window.Utils) Utils.toggleLoading('btn-submit', false, 'ĐANG NHẬP NGAY');
+        }
+    },
+
+    showErrorModal: (msg) => {
+        const modal = document.getElementById('login-error-modal');
+        const msgEl = document.getElementById('login-error-message');
+        if (modal && msgEl) {
+            msgEl.innerText = msg;
+            modal.classList.remove('hidden');
+        } else {
+            // Backup phòng khi mất file HTML
+            alert(msg);
         }
     },
 

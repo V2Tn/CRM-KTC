@@ -49,10 +49,25 @@
             </details>
         </div>
         
-        <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl shrink-0 mt-4 md:mt-0">
-            <button onclick="RankingController.loadData('week')" class="ranking-period-btn px-6 py-2.5 text-xs font-black rounded-xl transition-all">Tuần này</button>
-            <button onclick="RankingController.loadData('month')" class="ranking-period-btn px-6 py-2.5 text-xs font-black rounded-xl transition-all">Tháng này</button>
-            <button onclick="RankingController.loadData('all')" class="ranking-period-btn px-6 py-2.5 text-xs font-black rounded-xl transition-all">Tất cả</button>
+       <div class="flex flex-wrap items-center gap-2 bg-slate-100 p-1.5 rounded-2xl shrink-0 mt-4 md:mt-0">
+            <button id="btn-period-week" onclick="RankingController.loadData('week')" class="ranking-period-btn px-5 py-2.5 text-xs font-black rounded-xl transition-all bg-white text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-100 shadow-sm flex items-center gap-2">Tuần này</button>
+            <button id="btn-period-month" onclick="RankingController.loadData('month')" class="ranking-period-btn px-5 py-2.5 text-xs font-black rounded-xl transition-all bg-indigo-600 text-white shadow-md shadow-indigo-200 flex items-center gap-2">Tháng này</button>
+            <button id="btn-period-year" onclick="RankingController.loadData('year')" class="ranking-period-btn px-5 py-2.5 text-xs font-black rounded-xl transition-all bg-white text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-100 shadow-sm flex items-center gap-2">Năm nay</button>
+            
+            <div class="relative custom-dropdown-container">
+                <button id="btn-period-custom" type="button" onclick="toggleCustomDropdown('ranking-month-dropdown')" class="ranking-period-btn px-5 py-2.5 text-xs font-black rounded-xl transition-all bg-white text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-100 shadow-sm flex items-center gap-2">
+                    <i data-lucide="calendar-search" width="16"></i> <span id="ranking-custom-label">Chọn tháng</span>
+                </button>
+                <div id="ranking-month-dropdown" class="custom-dropdown-menu absolute top-full right-0 mt-2 bg-white rounded-2xl shadow-xl border border-slate-100 p-4 z-[100] hidden w-[280px] animate-in fade-in slide-in-from-top-2">
+                    <div class="flex justify-between items-center mb-4 border-b border-slate-50 pb-3">
+                        <button onclick="RankingController.changeYear(-1)" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors"><i data-lucide="chevron-left" width="16"></i></button>
+                        <span id="ranking-year-display" class="font-black text-slate-700 text-sm">2026</span>
+                        <button onclick="RankingController.changeYear(1)" class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors"><i data-lucide="chevron-right" width="16"></i></button>
+                    </div>
+                    <div class="grid grid-cols-4 gap-2 text-center" id="ranking-months-grid">
+                        </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -86,7 +101,6 @@
                 </button>
                 <img id="ranking-detail-avatar" src="" class="w-20 h-20 rounded-full border-4 border-white/20 mx-auto object-cover mb-3 shadow-lg">
                 <h3 id="ranking-detail-name" class="text-xl font-black text-white uppercase tracking-tight">Tên Nhân Viên</h3>
-                <p class="text-[10px] font-bold text-indigo-200 uppercase tracking-widest mt-1">Hồ sơ năng suất chi tiết</p>
             </div>
             
             <div id="ranking-detail-content" class="p-6 bg-slate-50/50">

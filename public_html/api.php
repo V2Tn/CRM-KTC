@@ -918,19 +918,36 @@ switch ($action) {
     case 'fetch_leaderboard':
         $period = $params['period'] ?? 'month';
         
-        $startDate = "";
-        $endDate = "";
+        $startDate = '2000-01-01 00:00:00';
+        $endDate = '2099-12-31 23:59:59';
         
-        // Xác định mốc thời gian (Đầu tháng đến cuối tháng)
+        // Fix cứng múi giờ để hàm tính ngày không bị lệch sang tháng cũ
+        date_default_timezone_set('Asia/Ho_Chi_Minh'); 
+        
         if ($period === 'month') {
             $startDate = date('Y-m-01 00:00:00');
             $endDate = date('Y-m-t 23:59:59');
         } elseif ($period === 'week') {
-            $startDate = date('Y-m-d 00:00:00', strtotime('-7 days'));
-            $endDate = date('Y-m-d 23:59:59');
-        } else {
-            $startDate = '2000-01-01 00:00:00';
-            $endDate = '2099-12-31 23:59:59';
+            // Lấy chính xác Thứ 2 và Chủ nhật của tuần này
+            $monday = strtotime('monday this week');
+            $sunday = strtotime('sunday this week');
+            
+            // Fix lỗi PHP: Nếu hôm nay là Chủ Nhật, 'monday this week' bị đẩy sang tuần sau
+            if (date('N') == 7) { 
+                $monday = strtotime('monday last week');
+                $sunday = strtotime('today');
+            }
+            $startDate = date('Y-m-d 00:00:00', $monday);
+            $endDate = date('Y-m-d 23:59:59', $sunday);
+        }elseif (preg_match('/^\d{4}-\d{2}$/', $period)) {
+            $year = explode('-', $period)[0];
+            $month = explode('-', $period)[1];
+            
+            $startDate = date("$year-$month-01 00:00:00");
+            $endDate = date("Y-m-t 23:59:59", strtotime($startDate));
+        } elseif ($period === 'year') {
+            $startDate = date('Y-01-01 00:00:00'); // Ngày 1 tháng 1 năm nay
+            $endDate = date('Y-12-31 23:59:59');   // Ngày 31 tháng 12 năm nay
         }
 
         $taskCond = "AND ((updatedAt >= '$startDate' AND updatedAt <= '$endDate') OR (createdAt >= '$startDate' AND createdAt <= '$endDate'))";
@@ -939,10 +956,7 @@ switch ($action) {
         try {
             $sql = "
                 SELECT 
-                    u.id, 
-                    u.fullName, 
-                    u.avatar,
-                    d.name as department_name,
+                    u.id, u.fullName, u.avatar, d.name as department_name,
                     COALESCE(t.total_tasks, 0) as total_tasks,
                     COALESCE(t.done_on_time, 0) as done_on_time,
                     COALESCE(t.done_late, 0) as done_late,
@@ -951,78 +965,60 @@ switch ($action) {
                     COALESCE(e.like_count, 0) as like_count,
                     COALESCE(e.dislike_count, 0) as dislike_count
                 FROM users u
+                LEFT JOIN roles r ON u.role = r.id   -- [ĐÃ FIX] Kết nối bảng roles để check quyền
                 LEFT JOIN departments d ON u.department = d.id
                 LEFT JOIN (
-                    -- Truy vấn gom nhóm Task
                     SELECT assigneeId,
                            COUNT(id) as total_tasks,
-                           -- Hoàn thành đúng hạn (Status = 3 và isOverdue = 0 hoặc null)
                            SUM(CASE WHEN status = 3 AND (isOverdue = 0 OR isOverdue IS NULL) THEN 1 ELSE 0 END) as done_on_time,
-                           -- Hoàn thành trễ hạn (Status = 3 và isOverdue = 1)
                            SUM(CASE WHEN status = 3 AND isOverdue = 1 THEN 1 ELSE 0 END) as done_late,
-                           -- Chưa hoàn thành và đã trễ hạn (Status != 3 và isOverdue = 1)
                            SUM(CASE WHEN status != 3 AND isOverdue = 1 THEN 1 ELSE 0 END) as overdue_not_done
                     FROM tasks
                     WHERE 1=1 $taskCond
                     GROUP BY assigneeId
                 ) t ON u.id = t.assigneeId
                 LEFT JOIN (
-                    -- Truy vấn gom nhóm Đánh giá (Chỉ tính trong tháng/tuần đó)
                     SELECT staff_id,
                            SUM(CASE WHEN type = 'STAR' THEN 1 ELSE 0 END) as star_count,
                            SUM(CASE WHEN type = 'LIKE' THEN 1 ELSE 0 END) as like_count,
                            SUM(CASE WHEN type = 'DISLIKE' THEN 1 ELSE 0 END) as dislike_count
                     FROM evaluations
-                    WHERE 1=1 $evalDateCond
+                    WHERE 1=1 $evalCond
                     GROUP BY staff_id
                 ) e ON u.id = e.staff_id
-                WHERE u.role != 'SUPER ADMIN'
+                -- [ĐÃ FIX] Chặn đích danh mã code của Admin, không cho đua top
+                WHERE (r.code NOT IN ('SUPER_ADMIN', 'ADMIN') OR r.code IS NULL) AND u.active = 1
             ";
             
             $stmt = $pdo->query($sql);
             $leaderboard = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // TÍNH TOÁN ĐIỂM
             foreach ($leaderboard as &$user) {
-                // 1. Số liệu task
                 $doneOnTime = (int)$user['done_on_time'];
                 $doneLate = (int)$user['done_late'];
                 $overdueNotDone = (int)$user['overdue_not_done'];
                 
-                // 2. Số liệu đánh giá tháng (Thực tế mỗi người sẽ chỉ có 1 đánh giá, nên biến này sẽ là 1 hoặc 0)
                 $star = (int)$user['star_count'];
                 $like = (int)$user['like_count'];
                 $dislike = (int)$user['dislike_count'];
                 
-                // 3. Áp dụng Công thức tính điểm
-                // Task đúng hạn (+10), Task trễ hạn (+5), Task đang trễ phạt (-5)
-                // Đánh giá Xuất sắc (+50), Tốt (+20), Kém phạt (-30)
+                // Tính điểm KPI
                 $user['score'] = ($doneOnTime * 10) + ($doneLate * 5) - ($overdueNotDone * 5) + ($star * 50) + ($like * 20) - ($dislike * 30);
+                if ($user['score'] < 0) $user['score'] = 0; 
                 
-                if ($user['score'] < 0) {
-                    $user['score'] = 0; // Đáy là 0 điểm
-                }
-                
-                // 4. Định dạng lại biến để hiển thị Giao diện cũ không bị lỗi
-                // Giao diện list cần biến done_tasks và late_tasks
-                $user['done_tasks'] = $doneOnTime + $doneLate; 
+                $user['done_tasks'] = $doneOnTime; 
                 $user['late_tasks'] = $doneLate + $overdueNotDone;
-                
-                if (empty($user['department_name'])) {
-                    $user['department_name'] = 'Chưa phân bổ';
-                }
+                if (empty($user['department_name'])) $user['department_name'] = 'Chưa phân bổ';
             }
 
-            // Sắp xếp xếp hạng: Ai điểm cao hơn thì đứng trên
+            // Xếp hạng
             usort($leaderboard, function($a, $b) {
+                if ($b['score'] == $a['score']) return $b['done_tasks'] <=> $a['done_tasks'];
                 return $b['score'] <=> $a['score'];
             });
 
             sendSuccess(['data' => $leaderboard]);
-            
-        } catch (Exception $e) {
-            sendError("Lỗi SQL: " . $e->getMessage());
-        }
+        } catch (Exception $e) { sendError("Lỗi SQL: " . $e->getMessage()); }
         break;
 
     // ==========================================
@@ -1030,70 +1026,103 @@ switch ($action) {
     // ==========================================
    case 'fetch_user_ranking_details':
         $userId = $params['user_id'] ?? 0;
+        $period = $params['period'] ?? 'month'; 
+        
+        date_default_timezone_set('Asia/Ho_Chi_Minh'); 
+        $startDate = '2000-01-01 00:00:00';
+        $endDate = '2099-12-31 23:59:59';
+        
+        if ($period === 'month') {
+            $startDate = date('Y-m-01 00:00:00');
+            $endDate = date('Y-m-t 23:59:59');
+        } elseif ($period === 'week') {
+            $monday = strtotime('monday this week');
+            $sunday = strtotime('sunday this week');
+            if (date('N') == 7) { 
+                $monday = strtotime('monday last week');
+                $sunday = strtotime('today');
+            }
+            $startDate = date('Y-m-d 00:00:00', $monday);
+            $endDate = date('Y-m-d 23:59:59', $sunday);
+        } elseif (preg_match('/^\d{4}-\d{2}$/', $period)) {
+            $year = explode('-', $period)[0];
+            $month = explode('-', $period)[1];
+            $startDate = date("$year-$month-01 00:00:00");
+            $endDate = date("Y-m-t 23:59:59", strtotime($startDate));
+        } elseif ($period === 'year') {
+            $startDate = date('Y-01-01 00:00:00'); 
+            $endDate = date('Y-12-31 23:59:59');   
+        }
+
+        $taskCond = "AND ((updatedAt >= '$startDate' AND updatedAt <= '$endDate') OR (createdAt >= '$startDate' AND createdAt <= '$endDate'))";
+        $evalCond = "AND created_at >= '$startDate' AND created_at <= '$endDate'";
         
         try {
-            // 1. Thống kê Task: Xong đúng hạn / Xong trễ hạn
+            // 1. Thống kê Task
             $stmtTask = $pdo->prepare("
                 SELECT 
+                    COUNT(id) as total_tasks,
                     SUM(CASE WHEN status = 3 AND (isOverdue = 0 OR isOverdue IS NULL) THEN 1 ELSE 0 END) as done_on_time,
-                    SUM(CASE WHEN status = 3 AND isOverdue = 1 THEN 1 ELSE 0 END) as done_late
+                    SUM(CASE WHEN status = 3 AND isOverdue = 1 THEN 1 ELSE 0 END) as done_late,
+                    SUM(CASE WHEN status = 4 THEN 1 ELSE 0 END) as canceled
                 FROM tasks 
-                WHERE assigneeId = ?
+                WHERE assigneeId = ? $taskCond
             ");
             $stmtTask->execute([$userId]);
             $taskStats = $stmtTask->fetch(PDO::FETCH_ASSOC);
 
-            // 2. Thống kê Đánh giá: Lấy trực tiếp từ bảng evaluations qua staff_id
-            $evalData = [];
+            // 2. Thống kê Đánh giá & Ghi chú
+            $evalData = ['Xuất sắc' => 0, 'Tốt' => 0, 'Kém' => 0];
+            $evalNotes = []; 
             $totalEvals = 0;
             
             try {
-                // Truy vấn đúng cột 'type' và 'staff_id' theo hình bạn cung cấp
                 $stmtEval = $pdo->prepare("
-                    SELECT e.type, COUNT(e.id) as cnt 
+                    SELECT e.type, e.note, e.created_at, m.fullName as manager_name
                     FROM evaluations e 
-                    WHERE e.staff_id = ? 
-                    GROUP BY e.type
+                    LEFT JOIN users m ON e.manager_id = m.id
+                    WHERE e.staff_id = ? $evalCond 
+                    ORDER BY e.created_at DESC
                 ");
                 $stmtEval->execute([$userId]);
                 $evals = $stmtEval->fetchAll(PDO::FETCH_ASSOC);
-                
-                // Cấu hình khung hiển thị mặc định (để nếu họ chưa có điểm vẫn hiện số 0)
-                $evalData = ['Xuất sắc' => 0, 'Tốt' => 0, 'Kém' => 0];
 
-                // Từ điển dịch từ mã Database sang Tiếng Việt cho Giao diện
-                $typeMapping = [
-                    'STAR' => 'Xuất sắc',
-                    'LIKE' => 'Tốt',
-                    'DISLIKE' => 'Kém'
-                ];
+                $typeMapping = ['STAR' => 'Xuất sắc', 'LIKE' => 'Tốt', 'DISLIKE' => 'Kém'];
 
                 foreach ($evals as $row) {
                     $rawType = trim($row['type']);
-                    
-                    // Dịch mã tiếng Anh sang Tiếng Việt
                     $mappedType = $typeMapping[$rawType] ?? $rawType; 
                     
                     if (!empty($mappedType)) {
-                        // Cộng dồn dữ liệu vào mảng
                         if (isset($evalData[$mappedType])) {
-                            $evalData[$mappedType] += (int)$row['cnt'];
+                            $evalData[$mappedType]++;
                         } else {
-                            $evalData[$mappedType] = (int)$row['cnt'];
+                            $evalData[$mappedType] = 1;
                         }
-                        $totalEvals += (int)$row['cnt'];
+                        $totalEvals++;
+                        
+                        if (!empty(trim($row['note']))) {
+                            $evalNotes[] = [
+                                'type' => $mappedType,
+                                'note' => trim($row['note']),
+                                'manager' => $row['manager_name'] ?? 'Quản lý',
+                                'date' => date('d/m/Y', strtotime($row['created_at']))
+                            ];
+                        }
                     }
                 }
             } catch (Exception $e) {
-                // Nếu vẫn lỗi, trả về -1 để báo cho JS
                 $totalEvals = -1; 
                 $evalData = ['error' => $e->getMessage()];
             }
 
             sendSuccess([
+                'total_tasks' => (int)$taskStats['total_tasks'], 
+                'canceled' => (int)$taskStats['canceled'],       
                 'on_time' => (int)$taskStats['done_on_time'],
                 'late' => (int)$taskStats['done_late'],
                 'evals' => $evalData,
+                'eval_notes' => $evalNotes,
                 'total_evals' => $totalEvals
             ]);
             
@@ -1101,7 +1130,6 @@ switch ($action) {
             sendError("Lỗi hệ thống: " . $e->getMessage());
         }
         break;
-
     // ==========================================
     // MODULE SỰ KIỆN 
     // ==========================================

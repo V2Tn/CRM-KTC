@@ -286,3 +286,49 @@ function createTaskHTML(task, staffList) {
         </div>
     </div>`;
 }
+
+// ==========================================
+// GLOBAL DROPDOWN HANDLERS (Dùng chung cho toàn hệ thống)
+// ==========================================
+window.toggleCustomDropdown = function(id) {
+    const el = document.getElementById(id);
+    // Đóng các dropdown khác đang mở
+    document.querySelectorAll('.custom-dropdown-menu').forEach(d => {
+        if (d.id !== id) d.classList.add('hidden');
+    });
+
+    if (el) {
+        el.classList.toggle('hidden');
+        const icon = el.previousElementSibling?.querySelector('[data-lucide="chevron-down"]');
+        if (icon) icon.style.transform = el.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+    }
+};
+
+window.selectCustomDropdown = function(prefix, value, label, callbackStr = null) {
+    const labelEl = document.getElementById(`${prefix}-label`);
+    const inputEl = document.getElementById(`${prefix}-hidden`);
+    const dropdown = document.getElementById(`${prefix}-dropdown`);
+
+    if (labelEl) labelEl.innerText = label;
+    if (inputEl) inputEl.value = value;
+    
+    if (dropdown) {
+        dropdown.classList.add('hidden');
+        const icon = dropdown.previousElementSibling?.querySelector('[data-lucide="chevron-down"]');
+        if (icon) icon.style.transform = 'rotate(0deg)';
+    }
+
+    // Chạy hàm callback nếu có
+    if (callbackStr) eval(callbackStr);
+};
+
+// Click ra ngoài thì tự đóng Dropdown
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.custom-dropdown-container')) {
+        document.querySelectorAll('.custom-dropdown-menu').forEach(d => {
+            d.classList.add('hidden');
+            const icon = d.previousElementSibling?.querySelector('[data-lucide="chevron-down"]');
+            if (icon) icon.style.transform = 'rotate(0deg)';
+        });
+    }
+});

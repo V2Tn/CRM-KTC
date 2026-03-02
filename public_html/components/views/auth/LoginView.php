@@ -60,4 +60,16 @@
             <p id="loading-desc" class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Kiểm tra thông tin bảo mật...</p>
         </div>
     </div>
+
+    <div id="login-error-modal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center font-['Lexend'] p-4">
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="document.getElementById('login-error-modal').classList.add('hidden')"></div>
+    <div class="relative bg-white rounded-[24px] w-full max-w-sm p-6 shadow-2xl text-center animate-in zoom-in-95 duration-200">
+        <div class="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-inner">
+            <i data-lucide="alert-triangle" width="32"></i>
+        </div>
+        <h3 class="text-lg font-black text-slate-800 uppercase tracking-tight mb-2">Đăng nhập thất bại</h3>
+        <p id="login-error-message" class="text-sm font-medium text-slate-600 mb-6 leading-relaxed">Vui lòng kiểm tra lại tài khoản hoặc mật khẩu.</p>
+        <button onclick="document.getElementById('login-error-modal').classList.add('hidden')" class="w-full py-3 bg-slate-100 text-slate-600 font-[900] text-xs uppercase rounded-xl hover:bg-slate-200 transition-all">Đã hiểu</button>
+    </div>
+</div>
 </div>
