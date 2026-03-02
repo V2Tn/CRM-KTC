@@ -121,9 +121,9 @@
     include 'DetailModalView.php';
 ?>
 
-<script src="/js/service/schedule/leave.service.js"></script>
-<script src="/js/service/schedule/event.service.js"></script>
-<script src="/js/service/schedule/detail.service.js"></script>
+<script src="/service/schedule/leave-min.js"></script>
+<script src="/service/schedule/event-min.js"></script>
+<script src="/service/schedule/detail-min.js"></script>
 <script>
     // Hàm mở/đóng dropdown
     window.toggleCustomDropdown = function(id) {

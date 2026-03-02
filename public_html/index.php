@@ -43,21 +43,21 @@ require_once 'constants.php';
         <?php include 'App.php'; ?>
     </div>
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
-<script src="js/controller/utils.js"></script>
-<script src="js/controller/notification.controller.js"></script>
-<script src="js/controller/profile.controller.js"></script>
-<script src="js/controller/ui.controller.js"></script>
-<script src="js/controller/auth.controller.js"></script>
-<script src="js/controller/ranking.controller.js"></script>
-<script src="js/controller/schedule.controller.js"></script>
-<script src="js/controller/reports.controller.js"></script>
-<script src="js/service/team/Departments.js"></script>
-<script src="js/service/team/DeptDetail.js"></script>
-<script src="js/service/team/MemberDetail.js"></script>
-<script src="js/controller/team.controller.js"></script>
-<script type="module" src="js/controller/tasks.controller.js"></script> 
-<script type="module" src="js/controller/staff.controller.js"></script>
-<script type="module" src="js/controller/department.controller.js"></script>
+<script src="controller/utils-min.js".js"></script>
+<script src="controller/notification-min.js"></script>
+<script src="controller/profile-min.js"></script>
+<script src="controller/ui-min.js"></script>
+<script src="controller/auth-min.js"></script>
+<script src="controller/ranking-min.js"></script>
+<script src="controller/schedule-min.js"></script>
+<script src="controller/reports-min.js"></script>
+<script src="service/team/Departments-min.js"></script>
+<script src="service/team/DeptDetail-min.js"></script>
+<script src="service/team/MemberDetail-min.js"></script>
+<script src="controller/team-min.js"></script>
+<script type="module" src="controller/tasks-min.js"></script> 
+<script type="module" src="controller/staff-min.js"></script>
+<script type="module" src="controller/department-min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script>
