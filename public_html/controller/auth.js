@@ -1,4 +1,5 @@
 // public_html/js/auth.js
+import authService from "../service/auth-min.js";
 
 const AuthController = {
   login: async (event) => {
@@ -26,7 +27,7 @@ const AuthController = {
 
     try {
       // 2. GỌI API LOGIN
-      const res = await Utils.callApi("login", { username, password });
+      const res = await authService.login(username, password);
 
       if (res.status === "success") {
         localStorage.setItem("current_session_user", JSON.stringify(res.user));
@@ -79,7 +80,7 @@ const AuthController = {
 
       // 2. Gọi API để xóa Session trên Server
       // Sử dụng callApi từ Utils mà bạn đã định nghĩa
-      const res = await window.Utils.callApi("logout");
+      const res = await authService.logout();
 
       if (res.status === "success") {
         // 3. Xóa dữ liệu phiên làm việc ở máy khách
@@ -99,3 +100,5 @@ const AuthController = {
     }
   },
 };
+
+window.AuthController = AuthController;

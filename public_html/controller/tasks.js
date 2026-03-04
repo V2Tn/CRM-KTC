@@ -11,19 +11,6 @@ class TasksController {
     window.TaskController = this;
   }
 
-  async _callApi(action, params = {}) {
-    try {
-      const response = await fetch("api.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, ...params }),
-      });
-      return await response.json();
-    } catch (error) {
-      return { status: "error", message: "Lỗi kết nối" };
-    }
-  }
-
   async init() {
     const form = document.getElementById("createTaskForm");
     if (form) {
@@ -78,7 +65,7 @@ class TasksController {
 
         // Load dữ liệu nhân viên
         if (this.staffList.length === 0) {
-          const res = await this._callApi("fetch_assignable_users");
+          const res = await taskService.fetchAssignableUsers();
           if (res.status === "success") {
             this.staffList = res.data;
             this.renderAssigneeList(this.staffList, listContainer, idInput);
@@ -264,10 +251,7 @@ class TasksController {
 
     if (taskEl) {
       taskEl.classList.remove("opacity-40");
-      const res = await this._callApi("update_task_quadrant", {
-        id: taskId,
-        newQuadrant: targetQuadrant,
-      });
+      const res = await taskService.updateQuadrant(taskId, targetQuadrant);
 
       if (res.status === "success") {
         if (window.Utils)
@@ -335,10 +319,7 @@ class TasksController {
   }
 
   async updateStatus(taskId, status) {
-    const res = await this._callApi("update_task_status", {
-      id: taskId,
-      status: status,
-    });
+    const res = await taskService.updateStatus(taskId, status);
     if (res.status === "success") {
       await this.loadTasks();
       if (status == 3) {
@@ -439,10 +420,7 @@ class TasksController {
   async saveTitle(taskId) {
     const input = document.getElementById(`input-title-${taskId}`);
     if (!input) return;
-    const res = await this._callApi("update_task_title", {
-      id: taskId,
-      title: input.value,
-    });
+    const res = await taskService.updateTitle(taskId, input.value);
     if (res.status === "success") await this.loadTasks();
   }
 

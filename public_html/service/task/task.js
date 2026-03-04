@@ -45,13 +45,36 @@ class TaskService {
     });
   }
 
-  // 3. Update trạng thái (Checkbox)
-  async updateStatus(taskId, newStatus) {
+  // 3. Update trạng thái
+  async updateStatus(taskId, status) {
     return await this._request({
       action: "update_task_status",
       id: taskId,
-      status: newStatus,
+      status: status,
     });
+  }
+
+  // 4. Update ma trận (kéo thả)
+  async updateQuadrant(taskId, newQuadrant) {
+    return await this._request({
+      action: "update_task_quadrant",
+      id: taskId,
+      newQuadrant: newQuadrant,
+    });
+  }
+
+  // 5. Update tiêu đề
+  async updateTitle(taskId, title) {
+    return await this._request({
+      action: "update_task_title",
+      id: taskId,
+      title: title,
+    });
+  }
+
+  // 6. Lấy danh sách người có thể giao việc
+  async fetchAssignableUsers() {
+    return await this._request({ action: "fetch_assignable_users" });
   }
 }
 

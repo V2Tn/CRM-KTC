@@ -2,6 +2,8 @@
  * js/profile.js
  * Quản lý Modal Hồ Sơ Cá Nhân (Header & Global) - Có Upload Avatar
  */
+import profileService from "../service/profile-min.js";
+
 const ProfileController = {
   // 1. Mở Profile của chính mình
   openMyProfile: function () {
@@ -17,7 +19,7 @@ const ProfileController = {
 
   // 2. Mở Modal & Lấy dữ liệu mới nhất
   openModal: async function (userId) {
-    const res = await Utils.callApi("get_profile_info", { user_id: userId });
+    const res = await profileService.getProfileInfo(userId);
     if (res.status === "success") {
       this._renderModalHTML(res.user);
     } else {
@@ -37,20 +39,10 @@ const ProfileController = {
     };
     reader.readAsDataURL(file);
 
-    // Chuẩn bị FormData gửi lên server
-    const formData = new FormData();
-    formData.append("action", "upload_avatar");
-    formData.append("avatar", file);
-
     if (window.Utils) window.Utils.showToast("Đang tải ảnh lên...", "info");
 
     try {
-      // Gửi request (Dùng fetch trực tiếp để gửi FormData)
-      const response = await fetch("api.php", {
-        method: "POST",
-        body: formData,
-      });
-      const res = await response.json();
+      const res = await profileService.uploadAvatar(file);
 
       if (res.status === "success") {
         if (window.Utils)
@@ -74,7 +66,6 @@ const ProfileController = {
         if (window.Utils) window.Utils.showToast(res.message, "error");
       }
     } catch (e) {
-      console.error(e);
       alert("Lỗi upload ảnh");
     }
   },
@@ -98,7 +89,7 @@ const ProfileController = {
       password: form.password.value,
     };
 
-    const res = await Utils.callApi("update_profile", data);
+    const res = await profileService.updateProfile(data);
 
     if (res.status === "success") {
       if (window.Utils) Utils.showToast("Cập nhật thành công!", "success");
@@ -223,3 +214,5 @@ const ProfileController = {
     if (window.lucide) lucide.createIcons();
   },
 };
+
+window.ProfileController = ProfileController;

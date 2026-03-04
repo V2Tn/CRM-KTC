@@ -317,6 +317,8 @@ const ScheduleController = {
   },
 };
 
+window.ScheduleController = ScheduleController;
+
 document.addEventListener("DOMContentLoaded", () => {
   if (document.getElementById("schedule-view-container")) {
     ScheduleController.init();

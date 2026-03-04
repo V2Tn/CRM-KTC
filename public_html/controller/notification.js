@@ -2,6 +2,7 @@
  * controller/notification.js
  * Quản lý: Polling thông báo, Hiển thị chuông, Tự động reload dữ liệu (View 3 & Team)
  */
+import notificationService from "../service/notification-min.js";
 const NotificationController = {
   hasUnread: false,
   interval: null,
@@ -88,7 +89,7 @@ const NotificationController = {
 
   fetch: async () => {
     // Gọi API lấy thông báo
-    const res = await Utils.callApi("fetch_notifications");
+    const res = await notificationService.fetch();
 
     if (res.status === "success") {
       NotificationController.renderBadge(res.unread_count);
@@ -228,14 +229,14 @@ const NotificationController = {
   markRead: async (notiId = null, relatedId = null, type = "") => {
     if (!notiId) {
       // NẾU KHÔNG CÓ ID -> ĐÂY LÀ HÀNH ĐỘNG "ĐỌC TẤT CẢ"
-      await Utils.callApi("mark_read", {});
+      await notificationService.markRead();
       Utils.showToast("Đã đánh dấu đọc tất cả", "success");
       NotificationController.fetch(); // Tải lại list cho mất dấu chấm đỏ
       return;
     }
 
     // NẾU CÓ ID -> ĐÁNH DẤU 1 CÁI VÀ CHUYỂN HƯỚNG
-    await Utils.callApi("mark_read", { noti_id: notiId });
+    await notificationService.markRead(notiId);
     document.getElementById("noti-dropdown")?.classList.add("hidden");
 
     const taskTypes = ["TASK_DONE", "TASK_CANCEL", "TASK_REDO"];
@@ -271,7 +272,7 @@ const NotificationController = {
   deleteNoti: async (notiId, event) => {
     if (event) event.stopPropagation();
 
-    const res = await Utils.callApi("delete_notification", { noti_id: notiId });
+    const res = await notificationService.delete(notiId);
     if (res.status === "success") {
       NotificationController.fetch(); // Tải lại list cho mất đi
     }
@@ -282,9 +283,7 @@ const NotificationController = {
     if (event) event.stopPropagation(); // Giữ popup không bị đóng
 
     // Gọi API với type = 'all_read'
-    const res = await Utils.callApi("delete_notification", {
-      type: "all_read",
-    });
+    const res = await notificationService.deleteAllRead();
 
     if (res.status === "success") {
       Utils.showToast("Đã dọn dẹp thư báo", "success");
@@ -315,6 +314,8 @@ const NotificationController = {
     return "Vừa xong";
   },
 };
+
+window.NotificationController = NotificationController;
 
 // Start
 NotificationController.init();

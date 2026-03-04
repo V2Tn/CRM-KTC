@@ -332,6 +332,8 @@ const RankingController = {
   },
 };
 
+window.RankingController = RankingController;
+
 document.addEventListener("DOMContentLoaded", () => {
   if (document.getElementById("ranking-view-container"))
     RankingController.init();

@@ -1,7 +1,8 @@
 /**
  * js/reports.js
- * Hoàn chỉnh: View-only, Dual Banner (Cá nhân & Giao việc), Fix hiển thị tên, CHỐNG LỖI CHO ROLE STAFF
  */
+import reportService from "../service/reports.js";
+
 const ReportController = {
   allData: { myTasks: [], assignedTasks: [] },
   currentPeriod: "today",
@@ -27,11 +28,12 @@ const ReportController = {
     const urlParams = new URLSearchParams(window.location.search);
     const focusTaskId = urlParams.get("focus_task");
 
-    const payload = { action: "fetch_report_data", period: period };
-    if (focusTaskId) payload.filter = "all";
-
     try {
-      const res = await Utils.callApi("fetch_report_data", payload);
+      // Gọi qua Service Layer thay vì gọi Utils.callApi trực tiếp
+      const res = await reportService.fetchReportData(
+        period,
+        focusTaskId ? "all" : null,
+      );
 
       if (res.status === "success") {
         this.allData.myTasks = this.normalize(res.myTasks);
@@ -367,6 +369,8 @@ const ReportController = {
     }
   },
 };
+
+window.ReportController = ReportController;
 
 document.addEventListener("DOMContentLoaded", () => {
   if (document.getElementById("chart-bars-container")) {

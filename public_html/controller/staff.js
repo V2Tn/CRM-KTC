@@ -220,7 +220,7 @@ class StaffController {
       res.data.forEach((r) => {
         const rName = (r.name || r.role_name).toUpperCase();
 
-        html += `<div class="p-3 rounded-xl text-xs font-[800] text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer transition-all" onclick="StaffController.selectCustomOption('role', '${r.id}', '${rName}')">${rName}</div>`;
+        html += `<div class="p-3 rounded-xl text-xs font-[800] text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer transition-all" onclick="StaffController.selectCustomOption('role', '${r.code || r.id}', '${rName}')">${rName}</div>`;
       });
       list.innerHTML = html;
     }
