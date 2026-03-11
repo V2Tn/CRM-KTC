@@ -457,8 +457,8 @@ class TasksController {
       startTime: t.start_time || t.startTime,
       createdById: t.created_by_id || t.createdById,
       assigneeId: t.assignee_id || t.assigneeId,
-      createdByLabel: t.created_by_name || "System",
-      assigneeLabel: t.assignee_name || "NV",
+      reatedByLabel: t.created_by_name || t.createdByLabel || "System",
+      assigneeLabel: t.assignee_name || t.assigneeLabel || "NV",
       isOverdue: t.isOverdue,
     };
   }
