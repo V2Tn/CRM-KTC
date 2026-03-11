@@ -1,5 +1,23 @@
 <?php
 require_once 'db_config.php'; 
+
+if (isset($_SESSION['user']['id'])) {
+    $current_uid = $_SESSION['user']['id'];
+    
+    // Xuống DB hỏi lại thông tin quyền và phòng ban mới nhất
+    $stmt = $pdo->prepare("SELECT u.role, u.department, r.code as role_code, r.name as role_name FROM users u LEFT JOIN roles r ON u.role = r.id WHERE u.id = ?");
+    $stmt->execute([$current_uid]);
+    $freshUser = $stmt->fetch();
+    
+    if ($freshUser) {
+        // Cập nhật đè lên Session hiện tại
+        $_SESSION['user']['role'] = $freshUser['role_code'];
+        $_SESSION['user']['role_name'] = $freshUser['role_name'];
+        $_SESSION['user']['role_id'] = $freshUser['role'];
+        $_SESSION['user']['department_id'] = $freshUser['department'];
+    }
+}
+
 $currentUser = $_SESSION['user'] ?? null;
 
 $activeTab = $_GET['tab'] ?? 'tasks'; 
