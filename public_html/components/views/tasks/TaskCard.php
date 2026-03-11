@@ -18,8 +18,8 @@ function renderTaskCard($task, $currentUser) {
     if (isset($task['isOverdue']) && $task['isOverdue'] == 1) $isOverdue = true;
     elseif (!empty($task['endTime']) && !$isFinished && strtotime($task['endTime']) < time()) $isOverdue = true;
 
-    $creatorLabel = ($task['createdById'] == $currentUserId) ? 'TÔI' : ($task['created_by_name'] ?? 'System');
-    $assigneeLabel = ($task['assigneeId'] == $currentUserId) ? 'TÔI' : ($task['assignee_name'] ?? 'NV');
+    $creatorLabel = ($task['createdById'] == $currentUserId) ? 'TÔI' : ($task['createdByLabel'] ?? 'System');
+    $assigneeLabel = ($task['assigneeId'] == $currentUserId) ? 'TÔI' : ($task['assigneeLabel'] ?? 'NV');
     
     $deadline = !empty($task['endTime']) ? date('H:i d/m', strtotime($task['endTime'])) : '';
     // [FIX] Start Time
