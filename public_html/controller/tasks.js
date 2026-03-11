@@ -452,13 +452,13 @@ class TasksController {
       title: t.title,
       status: Number(t.status),
       createdAt: t.created_at || t.createdAt,
-      updatedAt: t.updatedAt || t.updated_at, // [FIX] Lấy updatedAt từ DB
+      updatedAt: t.updatedAt || t.updated_at,
       endTime: t.end_time || t.endTime,
       startTime: t.start_time || t.startTime,
       createdById: t.created_by_id || t.createdById,
       assigneeId: t.assignee_id || t.assigneeId,
-      reatedByLabel: t.created_by_name || t.createdByLabel || "System",
-      assigneeLabel: t.assignee_name || t.assigneeLabel || "NV",
+      createdByLabel: t.createdByLabel || "System",
+      assigneeLabel: t.assigneeLabel || "NV",
       isOverdue: t.isOverdue,
     };
   }
